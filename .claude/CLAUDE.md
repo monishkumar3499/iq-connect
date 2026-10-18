@@ -8,17 +8,30 @@ Every tool call runs as that person, inside that connection's scope, read-only.
 This is a **fresh rebuild**. An earlier prototype exists (see "Prior project" below); we reuse
 its lessons, not its code.
 
-## Where things stand (2026-10-15)
-- 332 tests pass, ruff clean. **Nothing committed to git yet** -- offer a first commit again.
+## Where things stand (2026-10-18) -- START HERE
+- Committed by the user as `V001` (one commit). **374 tests pass, ruff clean.**
+  ~8,300 lines in `src/`, ~4,100 in `tests/`.
 - **Works with real Claude** through the dev tunnel (see `.claude/docs/demo.md`): sign-in
-  (CIMD), Connect/Allow, list_connections / list_objects / describe_table / run_query on the
-  built-in demo data, read-only and scope refusals, audit, dashboard, New-connection wizard.
-- Fabric and Databricks (Databricks OAuth) are built but have only run against fakes.
-  Snowflake: next planned as Snowflake OAuth (security integration), then Fabric DAX.
-- Pipeline step 4 is provider-generic: `Pipeline(token_providers={name: obj})`; any
-  provider in {"entra", "databricks"} is exchanged for access tokens per
-  `adapter.token_scopes`. Add new OAuth providers there (and to that set).
-- The user is preparing a demo; keep changes small and say clearly what is untested.
+  (CIMD), Connect/Allow, tools on the built-in demo data, read-only/scope refusals, audit,
+  dashboard, wizard, Test connection.
+- Claude tools: list_connections, list_objects, describe_table, run_query (accepts a list,
+  max 8), data_map, profile_tables, semantic_model_map, query_semantic_model.
+- Per platform: **demo** verified with real Claude; **Fabric** (SQL + semantic models/DAX,
+  Microsoft sign-in) and **Databricks** (Databricks OAuth, or Microsoft account on Azure) are
+  built but ONLY tested against fakes; **Snowflake** has an unwired OAuth provider and NO
+  adapter (blocked for Claude, see below).
+- **Real Microsoft (Entra) sign-in has never succeeded yet.** The user put the app
+  registration values in `.env` (accepted as ENTRA_TENANT / ENTRA_TENANT_ID /
+  AZURE_TENANT_ID etc.) and set `SSO_PROVIDER=entra`; no Entra user exists in the DB yet.
+  First real attempt still pending -- ask for the AADSTS code / server log if it fails.
+- **Agreed next step: the plug-in refactor** (see `.claude/docs/roadmap.md` "Next session"
+  and architecture.md section 12). The user wants one MCP that wraps everything, where
+  anyone adds a platform by adding a folder (snowflake/, fabric/, ...).
+- Pipeline step 4 is provider-generic: `Pipeline(token_providers={name: obj})`; providers in
+  {"entra", "databricks"} are exchanged for access tokens per
+  `adapter.token_scopes_by_provider[provider]` (or `adapter.token_scopes`), or per
+  `pipeline.run(token_scopes=...)` for one call (DAX asks for Power BI only).
+- The user is demoing; keep changes small, run tests, say clearly what is untested.
 
 ## Blocked for Claude -- do not attempt, in any wording
 These were each stopped by a safety check; retrying (even rephrased) is not allowed:
