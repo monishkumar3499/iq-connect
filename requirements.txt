@@ -1,0 +1,36 @@
+# Web server and MCP
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+mcp==2.3.0
+python-multipart==0.0.32          # form bodies: OAuth /token is form-encoded
+itsdangerous==2.2.0               # signed browser session cookies
+
+# Settings and data models
+pydantic==2.14.1
+pydantic-settings==2.15.0
+
+# Database (PostgreSQL)
+sqlalchemy==2.1.4
+psycopg[binary,pool]==3.3.6
+alembic==1.20.0
+
+# Auth, tokens and encryption
+pyjwt[crypto]==2.15.1
+cryptography==50.0.2
+msal==1.39.0                      # Entra sign-in and on-behalf-of tokens
+azure-identity==1.26.0            # the app's own identity for Key Vault
+azure-keyvault-keys==4.11.3       # wraps the per-secret encryption keys
+
+# HTTP client (platform REST APIs, CIMD documents)
+httpx==0.28.1
+
+# Read-only SQL policy
+sqlglot==30.22.0
+
+# Platform drivers
+pyodbc==5.3.0                     # Fabric Warehouse (needs Microsoft ODBC Driver 18)
+databricks-sdk==0.152.0
+snowflake-connector-python==4.8.0
+
+# Operations
+prometheus-client==0.26.0

@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IQ Connect Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+<style>
+/* Layout: decisions first, then the picture, then each part (setup flow, tools, data, security) as reference. */
+:root {
+  --bg: #f5f6f8; --surface: #ffffff; --fg: #1b2230; --muted: #5b6577; --line: #8a94a6; --rule: #d9dde5;
+  --hub: #2f4a8a; --hub-tint: #e6ecf8;
+  --fab: #0f7b6c; --fab-tint: #e2f3f0;
+  --dbx: #c2410c; --dbx-tint: #fbebe2;
+  --sf: #1d7fb8; --sf-tint: #e3f1fa;
+  --ext: #6b5b2e; --ext-tint: #f4efe1;
+  --ok: #2f7d3b; --ok-tint: #e5f3e6;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11151c; --surface: #19202a; --fg: #e4e8ef; --muted: #9aa4b5; --line: #7d889b; --rule: #2c3441;
+  --hub: #8fa8e8; --hub-tint: #1c2840; --fab: #4fc7b4; --fab-tint: #13302c;
+  --dbx: #f0915e; --dbx-tint: #3a2216; --sf: #6cbcec; --sf-tint: #13293a;
+  --ext: #d6c08a; --ext-tint: #2c2718; --ok: #7fcf8a; --ok-tint: #17301b; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #11151c; --surface: #19202a; --fg: #e4e8ef; --muted: #9aa4b5; --line: #7d889b; --rule: #2c3441;
+  --hub: #8fa8e8; --hub-tint: #1c2840; --fab: #4fc7b4; --fab-tint: #13302c;
+  --dbx: #f0915e; --dbx-tint: #3a2216; --sf: #6cbcec; --sf-tint: #13293a;
+  --ext: #d6c08a; --ext-tint: #2c2718; --ok: #7fcf8a; --ok-tint: #17301b; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 64px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; text-wrap: balance; letter-spacing: .01em; }
+h1 { font-size: 2rem; margin: 0 0 6px; }
+h2 { font-size: 1.3rem; margin: 0 0 14px; }
+h3 { font-size: 1.02rem; margin: 0; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 72ch; }
+code, .mono { font-family: var(--mono); font-size: .86em; }
+section { margin-top: 44px; }
+.figure { margin-top: 28px; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; overflow-x: auto; }
+.figure svg { display: block; min-width: 860px; width: 100%; height: auto; }
+.t { fill: var(--fg); font-family: var(--body); font-size: 13px; }
+.tb { fill: var(--fg); font-family: var(--body); font-size: 14px; font-weight: 600; }
+.ts { fill: var(--muted); font-family: var(--body); font-size: 11.5px; }
+.tcap { font-family: var(--display); font-size: 12px; letter-spacing: .08em; font-weight: 600; }
+.box { fill: var(--surface); stroke: var(--rule); stroke-width: 1; }
+.ext { fill: var(--ext-tint); stroke: var(--ext); stroke-width: 1.2; }
+.hubc { fill: var(--hub-tint); stroke: var(--hub); stroke-width: 1.4; }
+.hubm { fill: var(--surface); stroke: var(--hub); stroke-width: 1; }
+.store { fill: var(--ok-tint); stroke: var(--ok); stroke-width: 1.3; }
+.fab { fill: var(--fab-tint); stroke: var(--fab); stroke-width: 1.3; }
+.dbx { fill: var(--dbx-tint); stroke: var(--dbx); stroke-width: 1.3; }
+.sf { fill: var(--sf-tint); stroke: var(--sf); stroke-width: 1.3; }
+.c-hub { fill: var(--hub); } .c-ok { fill: var(--ok); } .c-ext { fill: var(--ext); }
+.ar { stroke: var(--line); stroke-width: 1.5; fill: none; }
+.ar.dash { stroke-dasharray: 5 4; }
+.ah { fill: var(--line); }
+
+.answers { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 14px; }
+.answer { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; }
+.answer .q { font-family: var(--display); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.answer p { font-size: .93rem; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 28px; }
+.grid2 > * { min-width: 0; }
+ol.flow { margin: 0; padding-left: 1.5em; display: grid; gap: 9px; }
+ol.flow li { padding-left: 4px; }
+ol.flow li::marker { font-family: var(--mono); color: var(--hub); font-weight: 500; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--display); font-weight: 600; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+td:first-child { font-weight: 600; }
+pre { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: var(--mono); font-size: .8rem; line-height: 1.6; }
+.cmp { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.cmp > div { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; }
+.cmp ul { margin: 0; padding-left: 1.1em; font-size: .9rem; display: grid; gap: 4px; }
+.verdict { display: inline-block; font-family: var(--mono); font-size: .74rem; padding: 1px 8px; border-radius: 999px; justify-self: start; }
+.verdict.no { background: var(--dbx-tint); color: var(--dbx); }
+.verdict.yes { background: var(--ok-tint); color: var(--ok); }
+.note { margin-top: 14px; font-size: .88rem; color: var(--muted); max-width: 80ch; }
+</style>
+
+</head><body>
+<div class="wrap">
+  <h1>IQ Connect Architecture</h1>
+  <p class="lede">A fresh design for one Claude connector over Fabric, Databricks and Snowflake. People sign in with company SSO, create named connections, each scoped to the warehouse or model they picked and carrying their own prompt, and edit them later in a settings app. Every tool call runs as that person, inside that connection's scope, read-only.</p>
+
+  <section>
+    <h2>Your questions, answered</h2>
+    <div class="answers">
+      <div class="answer"><span class="q">One server or one per platform?</span><p><strong>One server.</strong> One connector URL, one sign-in, one database, one place to enforce rules. Each platform is an <em>adapter</em> inside it that implements the same functions. Separate servers would mean three sign-ins, three token stores and a proxy between them, which is the complexity in today's hub.</p></div>
+      <div class="answer"><span class="q">How are people and connections identified?</span><p>Claude's token identifies the <strong>person</strong>, not a connection. A person owns any number of <strong>connections</strong> (for example "Sales warehouse", "Finance model"), and each tool call names which one to use. Settings are read from the database on every call, so edits in the UI apply on the next call with no reconnect.</p></div>
+      <div class="answer"><span class="q">Several platforms at once?</span><p>Yes, naturally. In one chat, Claude can query the Fabric connection, then the Snowflake one, and compare. Each call carries its connection name; there is no "current platform" to switch.</p></div>
+      <div class="answer"><span class="q">1,000 users at once?</span><p>Nothing about a user lives in server memory. Every request carries a token, the connection is loaded from PostgreSQL, and slow driver calls run in bounded thread pools. Run 3+ identical copies behind a load balancer and add more as needed.</p></div>
+      <div class="answer"><span class="q">Encrypt with something from Claude's token?</span><p><strong>Encrypt: yes. Key from the token: no.</strong> We issue that token ourselves, and it changes every hour, so data locked with it could not be unlocked after the next refresh. Use envelope encryption with a key held in Key Vault, bound to the user and connection (details below).</p></div>
+      <div class="answer"><span class="q">Read-only, and no peeking at other workspaces?</span><p>Four layers: the platform's own permissions (queries run <em>as the user</em>), a connection scope allow-list checked on every call, a SQL parser that allows only SELECT inside that scope, and no write tools at all. Any one layer failing still leaves the others.</p></div>
+    </div>
+  </section>
+
+  <div class="figure">
+    <svg viewBox="0 0 1040 600" role="img" aria-label="Claude and the browser reach one IQ service. Inside it, every tool call goes through five steps: identify the user, load the connection, check policy, get the credential, run in the adapter and audit. Fabric, Databricks and Snowflake adapters share one interface. PostgreSQL, Key Vault and the audit sink sit beside it; Entra ID provides SSO.">
+      <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+
+      <rect class="ext" x="40" y="20" width="320" height="64" rx="6"/>
+      <text class="tcap c-ext" x="56" y="40">ANTHROPIC CLOUD</text>
+      <text class="tb" x="56" y="62">Claude · one custom connector</text>
+      <text class="ts" x="56" y="77" visibility="hidden">.</text>
+
+      <rect class="ext" x="380" y="20" width="320" height="64" rx="6"/>
+      <text class="tcap c-ext" x="396" y="40">PERSON</text>
+      <text class="tb" x="396" y="62">Browser · sign-in and settings app</text>
+
+      <rect class="ext" x="740" y="20" width="260" height="64" rx="6"/>
+      <text class="tcap c-ext" x="756" y="40">COMPANY</text>
+      <text class="tb" x="756" y="62">Entra ID (SSO)</text>
+
+      <path class="ar" d="M200,84 V118" marker-end="url(#a)"/>
+      <path class="ar" d="M540,84 V118" marker-end="url(#a)"/>
+      <path class="ar dash" d="M740,52 H704" marker-end="url(#a)"/>
+
+      <rect class="hubc" x="40" y="120" width="660" height="330" rx="8"/>
+      <text class="tcap c-hub" x="56" y="142">IQ SERVICE · one codebase · N identical copies</text>
+
+      <rect class="hubm" x="56" y="154" width="306" height="56" rx="5"/>
+      <text class="tb" x="68" y="176">/mcp + OAuth server</text>
+      <text class="ts" x="68" y="196">token = the person, not a connection</text>
+      <rect class="hubm" x="378" y="154" width="306" height="56" rx="5"/>
+      <text class="tb" x="390" y="176">Sign-in, setup wizard, settings app</text>
+      <text class="ts" x="390" y="196">add, edit, rename, delete connections</text>
+
+      <text class="tcap c-hub" x="56" y="234">EVERY TOOL CALL</text>
+      <rect class="hubm" x="56" y="244" width="112" height="56" rx="5"/>
+      <text class="tb" x="66" y="266">1 Who</text><text class="ts" x="66" y="285">verify token</text>
+      <rect class="hubm" x="182" y="244" width="112" height="56" rx="5"/>
+      <text class="tb" x="192" y="266">2 Connection</text><text class="ts" x="192" y="285">owned by user?</text>
+      <rect class="hubm" x="308" y="244" width="112" height="56" rx="5"/>
+      <text class="tb" x="318" y="266">3 Policy</text><text class="ts" x="318" y="285">scope + SQL check</text>
+      <rect class="hubm" x="434" y="244" width="112" height="56" rx="5"/>
+      <text class="tb" x="444" y="266">4 Credential</text><text class="ts" x="444" y="285">decrypt, refresh</text>
+      <rect class="hubm" x="560" y="244" width="124" height="56" rx="5"/>
+      <text class="tb" x="570" y="266">5 Run + audit</text><text class="ts" x="570" y="285">adapter, log row</text>
+      <path class="ar" d="M168,272 H180" marker-end="url(#a)"/>
+      <path class="ar" d="M294,272 H306" marker-end="url(#a)"/>
+      <path class="ar" d="M420,272 H432" marker-end="url(#a)"/>
+      <path class="ar" d="M546,272 H558" marker-end="url(#a)"/>
+
+      <text class="tcap c-hub" x="56" y="326">ADAPTERS · same functions, different insides</text>
+      <rect class="fab" x="56" y="336" width="196" height="100" rx="5"/>
+      <text class="tb" x="68" y="358">Fabric adapter</text>
+      <text class="ts" x="68" y="378">Entra on-behalf-of</text>
+      <text class="ts" x="68" y="394">T-SQL via ODBC</text>
+      <text class="ts" x="68" y="410">semantic model (DAX)</text>
+      <rect class="dbx" x="272" y="336" width="196" height="100" rx="5"/>
+      <text class="tb" x="284" y="358">Databricks adapter</text>
+      <text class="ts" x="284" y="378">Entra or Databricks OAuth</text>
+      <text class="ts" x="284" y="394">Statement Execution API</text>
+      <text class="ts" x="284" y="410">Unity Catalog grants</text>
+      <rect class="sf" x="488" y="336" width="196" height="100" rx="5"/>
+      <text class="tb" x="500" y="358">Snowflake adapter</text>
+      <text class="ts" x="500" y="378">OAuth or key-pair</text>
+      <text class="ts" x="500" y="394">pinned read-only role</text>
+      <text class="ts" x="500" y="410">async query ids</text>
+
+      <rect class="store" x="740" y="120" width="260" height="150" rx="6"/>
+      <text class="tcap c-ok" x="756" y="142">SHARED STATE</text>
+      <text class="tb" x="756" y="164">PostgreSQL</text>
+      <text class="ts" x="756" y="184">orgs, users, connections</text>
+      <text class="ts" x="756" y="200">credentials (encrypted)</text>
+      <text class="ts" x="756" y="216">OAuth clients, codes, tokens</text>
+      <text class="ts" x="756" y="232">org policies</text>
+      <text class="ts" x="756" y="248">every row carries org_id</text>
+      <rect class="box" x="740" y="286" width="260" height="70" rx="6"/>
+      <text class="tb" x="756" y="310">Key Vault</text>
+      <text class="ts" x="756" y="330">key-encryption key, signing key</text>
+      <rect class="box" x="740" y="372" width="260" height="78" rx="6"/>
+      <text class="tb" x="756" y="396">Audit sink</text>
+      <text class="ts" x="756" y="416">every query: who, where, what,</text>
+      <text class="ts" x="756" y="432">rows, time → SIEM</text>
+      <path class="ar" d="M700,200 H738" marker-end="url(#a)"/>
+      <path class="ar" d="M700,320 H738" marker-end="url(#a)"/>
+      <path class="ar" d="M700,410 H738" marker-end="url(#a)"/>
+
+      <path class="ar dash" d="M154,436 V506" marker-end="url(#a)"/>
+      <path class="ar dash" d="M370,436 V506" marker-end="url(#a)"/>
+      <path class="ar dash" d="M586,436 V506" marker-end="url(#a)"/>
+      <rect class="ext" x="56" y="508" width="196" height="62" rx="6"/>
+      <text class="tb" x="68" y="532">Microsoft Fabric</text>
+      <text class="ts" x="68" y="551">workspace → warehouse, model</text>
+      <rect class="ext" x="272" y="508" width="196" height="62" rx="6"/>
+      <text class="tb" x="284" y="532">Databricks</text>
+      <text class="ts" x="284" y="551">catalog → schema → table</text>
+      <rect class="ext" x="488" y="508" width="196" height="62" rx="6"/>
+      <text class="tb" x="500" y="532">Snowflake</text>
+      <text class="ts" x="500" y="551">database → schema → table</text>
+    </svg>
+  </div>
+
+  <section class="grid2">
+    <div>
+      <h2>Connect and set up</h2>
+      <ol class="flow">
+        <li>The person adds the connector in Claude (one URL) and presses Connect.</li>
+        <li>Claude opens our <code>/authorize</code>. Our page signs them in with company SSO (Entra). We now know the person: org, user id, email.</li>
+        <li>If they already have connections, they see them and press Continue. Otherwise they press <em>Add connection</em>.</li>
+        <li>They pick a platform and sign in to it. For Fabric, the same Entra sign-in also grants delegated Fabric/Power BI access. Snowflake uses OAuth or key-pair; Databricks uses Entra or Databricks OAuth, as today.</li>
+        <li>We browse with <em>their</em> credential, so they see only what they can already access. They pick the scope: a workspace and a warehouse or semantic model, or a catalog and schema.</li>
+        <li>They name the connection and write an optional custom prompt. We save it, with credentials encrypted.</li>
+        <li>We redirect to Claude with a code. Claude exchanges it for a token that identifies the person.</li>
+        <li>Claude lists tools: the same set for every platform. Each call names a connection.</li>
+        <li>Later, the person opens the settings app (same SSO) to rename, re-scope, edit prompts, add or delete connections. Changes apply to the next tool call.</li>
+      </ol>
+    </div>
+    <div>
+      <h2>One tool set for every platform</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Tool</th><th>Does</th></tr></thead>
+          <tbody>
+            <tr><td><code>list_connections</code></td><td>Names, platform, SQL dialect, scope and custom prompt of each of your connections</td></tr>
+            <tr><td><code>list_objects</code></td><td>Browse schemas, tables and views, only inside the connection's scope</td></tr>
+            <tr><td><code>describe_table</code></td><td>Columns, types, comments, row-count estimate</td></tr>
+            <tr><td><code>run_query</code></td><td>Read-only SQL with a row limit; returns rows, or a query id if slow</td></tr>
+            <tr><td><code>get_query_result</code></td><td>Fetch a slow query's result by id</td></tr>
+            <tr><td><code>query_semantic_model</code></td><td>Only for connections whose platform supports it (Fabric DAX today); listed with that capability</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Same names and parameters everywhere, but SQL itself differs between T-SQL, Databricks SQL and Snowflake SQL. That's why <code>list_connections</code> reports each connection's dialect, and errors say which dialect was expected. The custom prompt is returned by <code>list_connections</code> and repeated in that connection's results, so it reaches Claude even though server-wide instructions can't vary per connection.</p>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div>
+      <h2>The adapter contract</h2>
+<pre>class PlatformAdapter(Protocol):
+    platform: str                       # "fabric" | "databricks" | "snowflake"
+    dialect: str                        # "tsql" | "databricks" | "snowflake"
+    capabilities: set[str]              # e.g. {"sql", "semantic_model"}
+
+    # setup wizard
+    def browse_scope(cred, path) -> list[ScopeNode]
+    # tool calls (scope already checked by the core)
+    def list_objects(conn, cred, path) -> list[Obj]
+    def describe_table(conn, cred, table) -> Table
+    def run_query(conn, cred, sql, limit) -> Rows | QueryId
+    def get_result(conn, cred, query_id) -> Rows | Pending
+    def tables_in(sql) -> list[QualifiedName]   # for the scope check</pre>
+      <p class="note">The core never knows which platform it's talking to. Adding a fourth platform means writing one adapter.</p>
+    </div>
+    <div>
+      <h2>Data model</h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Table</th><th>Key fields</th></tr></thead>
+          <tbody>
+            <tr><td>orgs</td><td>id, idp issuer, policies (allowed platforms, allowed workspaces, write = never)</td></tr>
+            <tr><td>users</td><td>id, org_id, idp subject, email</td></tr>
+            <tr><td>credentials</td><td>user_id, provider (entra, snowflake, databricks), ciphertext, wrapped key, expiry</td></tr>
+            <tr><td>connections</td><td>id, user_id, org_id, platform, name, custom_prompt, scope (workspace, warehouse, model, catalog, schemas), settings (role, row limit), credential_id</td></tr>
+            <tr><td>oauth_*</td><td>Claude's client, auth codes, refresh tokens (hashed)</td></tr>
+            <tr><td>audit_log</td><td>time, user, connection, tool, query text, rows, ms, outcome</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Credentials are per user and provider, not per connection. One Entra sign-in can serve both a Fabric and an Azure Databricks connection.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Read-only and staying inside the scope</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Layer</th><th>How it's enforced</th><th>What it stops</th></tr></thead>
+        <tbody>
+          <tr><td>1 Platform permissions</td><td>Queries run as the user (Fabric OBO, Databricks user token, Snowflake read-only role). Masking, row-level security and grants apply as usual.</td><td>Anything the user couldn't see themselves</td></tr>
+          <tr><td>2 Connection scope</td><td>Every table a query touches is resolved to its full name and checked against the connection's allow-list. Browsing tools only list inside the scope.</td><td>Other workspaces, warehouses, catalogs and schemas the user <em>can</em> see but didn't pick</td></tr>
+          <tr><td>3 SQL policy</td><td>A real SQL parser (for example sqlglot, per dialect), not keyword matching: one statement, SELECT/WITH only, no DDL/DML, no procedures, no file or external reads.</td><td>Writes, multi-statement tricks, escape hatches</td></tr>
+          <tr><td>4 Tool surface</td><td>No write tools exist. Read-only driver modes where offered (Fabric <code>ApplicationIntent=ReadOnly</code>).</td><td>Claude being talked into writing</td></tr>
+          <tr><td>5 Limits</td><td>Row cap, query timeout, per-user and per-org rate limits, warehouse size caps.</td><td>Runaway cost, bulk extraction</td></tr>
+          <tr><td>6 Org policy</td><td>The company admin sets which platforms and workspaces may be connected at all.</td><td>Users connecting data the company hasn't approved</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Write access, if ever wanted, should be a separate tool set an org admin enables per connection, with platform-side write grants, never by loosening layer 3. Also remember that table contents can contain text that tries to instruct Claude (prompt injection). Read-only access and tight scope keep the possible damage small.</p>
+  </section>
+
+  <section>
+    <h2>Encrypting stored details</h2>
+    <div class="cmp">
+      <div>
+        <h3>Key derived from Claude's token</h3>
+        <span class="verdict no">doesn't work</span>
+        <ul>
+          <li>We issue that token, so it isn't a secret from us.</li>
+          <li>It's replaced every hour, so yesterday's data couldn't be decrypted today.</li>
+          <li>Claude is only present while a tool call is running. The settings app needs the data with no Claude token at all.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Envelope encryption with Key Vault</h3>
+        <span class="verdict yes">recommended</span>
+        <ul>
+          <li>Each credential gets its own random data key. The data key is wrapped by a master key that never leaves Key Vault.</li>
+          <li>The user id and connection id are bound in as associated data, so a row copied onto another user fails to decrypt.</li>
+          <li>Rotate the master key without re-encrypting everything; revoke it to make every stored secret unreadable.</li>
+          <li>Encrypt the secrets (tokens, keys). Names, scope and prompts are protected by database encryption at rest plus access control.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note">Storing less beats encrypting more. Prefer OAuth refresh tokens (revocable by the company) over passwords. If Snowflake is set up with External OAuth trusting Entra, all three platforms can use the one Entra sign-in.</p>
+  </section>
+
+  <section>
+    <h2>Compliance checklist</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Topic</th><th>Approach</th></tr></thead>
+        <tbody>
+          <tr><td>Tenant isolation</td><td><code>org_id</code> on every row and in every query; PostgreSQL row-level security as a backstop</td></tr>
+          <tr><td>Audit</td><td>Every tool call logged and exported to the company's SIEM; retention set per org</td></tr>
+          <tr><td>Revocation</td><td>Disabling a user in Entra stops refreshes. Deleting a connection deletes its credential. An admin can revoke all of a user's connections.</td></tr>
+          <tr><td>Data leaving the tenant</td><td>Query results go to Claude. Agree retention terms with Anthropic (Enterprise agreement) and decide which data classes are allowed.</td></tr>
+          <tr><td>Secrets hygiene</td><td>Nothing secret in logs or errors; Key Vault for keys; managed identity for the app itself</td></tr>
+          <tr><td>Later: silent sign-in</td><td>Enterprise Managed Auth on the same OAuth server, once the core is in place</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+</body></html>

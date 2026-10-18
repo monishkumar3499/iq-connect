@@ -1,0 +1,21 @@
+# Secrets and environments
+.env
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Local state (dev keys, sqlite scratch files, logs)
+.local/
+
+# Web app
+web/node_modules/
+web/dist/
+
+# Build artefacts
+dist/
+build/
