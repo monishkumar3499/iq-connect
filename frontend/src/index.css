@@ -1,0 +1,124 @@
+@import "tailwindcss";
+@import "@fontsource-variable/plus-jakarta-sans";
+
+/* JMAN Group look (JHub): deep indigo ink, white panels, soft lavender, mint and
+   blush tints, teal accent, and a deep violet navigation (sidebar, phone top bar).
+   shadcn components read these tokens; every colour on a screen comes from them. */
+@theme inline {
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--ring);
+  --color-ink: var(--ink);
+  --color-teal: var(--teal);
+  --color-hero: var(--hero);
+  --color-hero-foreground: var(--hero-foreground);
+  --color-mint: var(--mint);
+  --color-mint-ink: var(--mint-ink);
+  --color-blush: var(--blush);
+  --color-blush-ink: var(--blush-ink);
+  --color-lavender: var(--lavender);
+  --color-amber: var(--amber);
+  --color-amber-ink: var(--amber-ink);
+  --color-nav: var(--nav);
+  --color-nav-raised: var(--nav-raised);
+  --color-nav-foreground: var(--nav-foreground);
+  --color-nav-muted: var(--nav-muted);
+  --color-nav-active: var(--nav-active);
+  --color-nav-active-foreground: var(--nav-active-foreground);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 12px);
+}
+
+:root {
+  --radius: 0.85rem;
+  --ink: #1b1660;
+  --teal: #2bb5a0;
+  --page: #f7f6fd;
+  --background: #ffffff;
+  --foreground: #1b1660;
+  --card: #ffffff;
+  --primary: #1b1660;
+  --primary-foreground: #ffffff;
+  --secondary: #f1effc;
+  --secondary-foreground: #1b1660;
+  --muted: #f4f3fa;
+  --muted-foreground: #5d6178;
+  --accent: #f1effc;
+  --accent-foreground: #1b1660;
+  --destructive: #c2264f;
+  --border: #e7e5f2;
+  --ring: #2bb5a0;
+  --hero: #1b1660;
+  --hero-foreground: #ffffff;
+  --lavender: #f1effc;
+  --mint: #e3f7f3;
+  --mint-ink: #0f8a78;
+  --blush: #fdecf2;
+  --blush-ink: #b4235a;
+  --amber: #fff6df;
+  --amber-ink: #95620a;
+  --shadow: 27 22 96;
+  --glow-1: #ece9fb;
+  --glow-2: #e3f7f3;
+  --glow-3: #fdecf2;
+  --nav: #171538;
+  --nav-raised: #26225a;
+  --nav-foreground: #ecebff;
+  --nav-muted: #a6a4c8;
+  --nav-active: #a8a1ff;
+  --nav-active-foreground: #120f33;
+  color-scheme: light;
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  html, body, #root { min-height: 100%; }
+  body {
+    @apply bg-page text-foreground font-sans antialiased;
+    font-feature-settings: "ss01";
+  }
+  ::selection { background: var(--mint); color: var(--ink); }
+}
+
+/* Soft, ink-tinted elevation. */
+@utility shadow-soft { box-shadow: 0 18px 50px -34px rgb(var(--shadow) / 0.38); }
+@utility shadow-lift { box-shadow: 0 28px 60px -34px rgb(var(--shadow) / 0.55); }
+@utility shadow-float { box-shadow: 0 20px 60px -28px rgb(var(--shadow) / 0.6); }
+@utility shadow-button { box-shadow: 0 10px 30px -12px rgb(var(--shadow) / 0.55); }
+
+/* The floating card collage (landing) and the app's background wash. */
+.collage {
+  background:
+    radial-gradient(60rem 40rem at 10% 0%, var(--glow-1) 0%, transparent 60%),
+    radial-gradient(50rem 40rem at 90% 100%, var(--glow-2) 0%, transparent 55%),
+    radial-gradient(40rem 30rem at 0% 100%, var(--glow-3) 0%, transparent 60%),
+    var(--page);
+}
+.collage-grid { transform: rotate(-8deg) scale(1.08); transform-origin: center; }
+.float-card { animation: float 9s ease-in-out infinite; }
+.float-card:nth-child(3n) { animation-delay: -3s; }
+.float-card:nth-child(3n + 1) { animation-delay: -6s; }
+@keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+@keyframes toast-in { from { opacity: 0; translate: 0 12px; } to { opacity: 1; translate: 0 0; } }
+.toast-in { animation: toast-in 0.25s ease-out; }
+@media (prefers-reduced-motion: reduce) { .float-card, .toast-in { animation: none; } }

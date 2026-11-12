@@ -1,0 +1,54 @@
+# IQ Connect locally: PostgreSQL + the IQ Connect service on http://localhost:8000.
+#
+#   docker compose up --build        (WSL / Linux shell, in the project folder)
+#
+# One service on port 8000 serves every platform (Fabric, Databricks, Snowflake) behind one
+# connector URL -- the same image the AWS EC2 instance runs behind the load balancer.
+# Settings come from .env (see .env.example); the values below only point the container at
+# the compose database and the /data volume. Nothing secret is written here: the database
+# password is a local-only default, override it with POSTGRES_PASSWORD in your shell.
+
+name: iq-connect
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: iq
+      POSTGRES_USER: iq
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iq-local-only}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iq -d iq"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  iq-connect:
+    build: .
+    image: iq-connect:local
+    env_file: .env
+    environment:
+      # These win over .env: inside the container the database is "db" and keys live on /data.
+      DATABASE_URL: postgresql+psycopg://iq:${POSTGRES_PASSWORD:-iq-local-only}@db:5432/iq
+      HOST: 0.0.0.0
+      PORT: "8000"
+      FRONTEND_DIR: /app/frontend/dist
+      LOCAL_KEY_FILE: /data/keys.json
+      LOCAL_SIGNING_KEY_FILE: /data/signing_keys.json
+    ports:
+      - "8000:8000"
+    volumes:
+      - iqdata:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    # Locally only: create the key files on the first start (never overwrites existing ones).
+    # On a real server run create-keys once by hand and back the /data volume up instead.
+    command: ["sh", "-c", "python -m backend.main create-keys && python -m backend.main migrate && exec python -m backend.main"]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  iqdata:

@@ -1,0 +1,18 @@
+# Never in the image: secrets, local state, tooling, caches.
+.env
+.local/
+.venv/
+.git/
+.claude/
+**/__pycache__/
+**/*.egg-info/
+.pytest_cache/
+.ruff_cache/
+frontend/node_modules/
+frontend/dist/
+tests/
+*.png
+README.md
+src/
+docker-compose.yml
+**/__pycache__/

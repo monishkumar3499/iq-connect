@@ -1,5 +1,0 @@
-# Development and test tools only -- never installed in production.
--r requirements.txt
-
-pytest==9.1.1
-ruff==0.17.0                      # linter + import sorter
